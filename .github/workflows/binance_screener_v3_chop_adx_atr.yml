@@ -1,0 +1,117 @@
+name: Binance Screener V3
+
+"on":
+  workflow_dispatch:
+  schedule:
+    - cron: "0 * * * *"
+
+permissions:
+  contents: read
+
+jobs:
+  run-screener:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v6
+
+      - name: Set up Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.11"
+
+      - name: Verify files
+        run: |
+          echo "Repository:"
+          pwd
+          echo
+          echo "Files:"
+          find . -maxdepth 3 -type f | sort
+          echo
+          echo "Python:"
+          python --version
+
+      - name: Run Binance Multi-Market Screener
+        env:
+          BINANCE_BASE_URL: "https://data-api.binance.vision"
+          BINANCE_SPOT_BASE_URL: "https://data-api.binance.vision"
+          BINANCE_USDM_BASE_URL: "https://fapi.binance.com"
+          BINANCE_COINM_BASE_URL: "https://dapi.binance.com"
+          BINANCE_OPTIONS_BASE_URL: "https://eapi.binance.com"
+          BINANCE_TOKENIZED_BASE_URL: "https://api.binance.com"
+
+          BINANCE_API_KEY: ${{ secrets.BINANCE_API_KEY }}
+
+          ENABLE_SPOT: "true"
+          ENABLE_MARGIN: "true"
+          ENABLE_USDM_FUTURES: "true"
+          ENABLE_COINM_FUTURES: "true"
+          ENABLE_OPTIONS: "true"
+          ENABLE_TOKENIZED_STOCKS: "true"
+
+          QUOTE_ASSETS: ""
+          EXCLUDE_STABLECOINS: "true"
+          EXCLUDE_LEVERAGED_TOKENS: "true"
+          MAX_SPREAD_PERCENT: "0.10"
+          MIN_24H_QUOTE_VOLUME: "1000000"
+          MIN_HISTORY_DAYS: "30"
+
+          ORDER_BOOK_DEPTH_ENABLED: "true"
+          ORDER_BOOK_DEPTH_LIMIT: "100"
+          ORDER_BOOK_DEPTH_PCT: "0.25"
+          MIN_ORDER_BOOK_DEPTH_QUOTE: "25000"
+          ORDER_BOOK_DEPTH_WORKERS: "8"
+          DEPTH_VOLUME_ANOMALY_PERCENT: "100"
+
+          # Liste EXPLICITE des bases connues comme tokenisées/spéciales.
+          # Aucun suffixe de ticker n'est utilisé pour inférer cette catégorie.
+          BINANCE_TOKENIZED_SPOT_BASES: "AAPLB,CRCLB,DRAMB,MRVLB,MSTRB,MUB,NVDAB,QQQB,SNDKB,SKHYB,SNXXB,SPCXB,TQQQB,TSLAB"
+          BASE_ASSET_SUMMARY_LIMIT: "20"
+
+          REGIME_ENABLED: "true"
+          REGIME_INTERVAL: "1h"
+          CHOP_PERIOD: "14"
+          ADX_PERIOD: "14"
+          ATR_REGIME_PERIOD: "14"
+          CHOP_RANGE_THRESHOLD: "55"
+          CHOP_TREND_THRESHOLD: "40"
+          ADX_TREND_THRESHOLD: "25"
+          ADX_STRONG_THRESHOLD: "40"
+          ATR_LOW_PERCENT: "0.50"
+          ATR_HIGH_PERCENT: "1.50"
+          ATR_EXTREME_PERCENT: "2.50"
+
+          FUTURES_QUOTE_ASSETS: "USDT,USDC"
+          FUTURES_CONTRACT_TYPES: "PERPETUAL"
+          MIN_FUTURES_QUOTE_VOLUME: "5000000"
+          MIN_FUTURES_TRADES: "1000"
+          MAX_FUTURES_SPREAD_PERCENT: "0.20"
+          MIN_FUNDING_RATE_PERCENT: "-1.0"
+          MAX_FUNDING_RATE_PERCENT: "1.0"
+
+          OPTIONS_QUOTE_ASSETS: "USDT"
+          MIN_OPTIONS_QUOTE_VOLUME: "0"
+          MIN_OPTIONS_TRADES: "0"
+          MAX_OPTIONS_SPREAD_PERCENT: "5.0"
+          OPTIONS_MAX_ASSETS: "500"
+
+          TOKENIZED_MAX_ASSETS: "100"
+          MAX_TOKENIZED_SPREAD_PERCENT: "1.0"
+
+          REGIME_WORKERS: "8"
+          REGIME_KLINES_LIMIT: "250"
+
+          HTTP_TIMEOUT_SECONDS: "20"
+          HTTP_RETRIES: "3"
+
+          EMAIL_HOST: "smtp.gmail.com"
+          EMAIL_PORT: "465"
+          EMAIL_USER: ${{ secrets.EMAIL_USER }}
+          EMAIL_PASS: ${{ secrets.EMAIL_PASS }}
+          EMAIL_TO: ${{ secrets.EMAIL_TO }}
+          EMAIL_TOP_RESULTS: "50"
+
+        run: |
+          python -u screener_v3_chop_adx_atr_table.py
